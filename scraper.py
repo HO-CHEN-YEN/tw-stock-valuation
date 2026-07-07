@@ -5,6 +5,12 @@ from io import StringIO
 
 import pandas as pd
 import requests
+import urllib3
+
+# MoneyDJ 的憑證鏈缺少 Subject Key Identifier 欄位，部分環境（如 Streamlit Cloud）
+# 用較嚴格的 OpenSSL 版本會直接判定憑證無效而連線失敗，本機環境則不受影響。
+# 這裡只讀取公開股價/EPS 資料、不傳送任何帳密，因此關閉憑證驗證作為因應。
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 HEADERS = {
     "User-Agent": (
@@ -19,7 +25,7 @@ class ScrapeError(RuntimeError):
 
 
 def _get_html(url: str) -> str:
-    resp = requests.get(url, headers=HEADERS, timeout=10)
+    resp = requests.get(url, headers=HEADERS, timeout=10, verify=False)
     resp.raise_for_status()
     resp.encoding = "big5"
     return resp.text
